@@ -1,0 +1,226 @@
+{
+    "$id": "https://agilelab.com/platform/v1/dataproduct_component.schema.json",
+    "title": "Data Product Component Descriptor",
+    "description": "",
+    "type": "object",
+    "properties": {
+        "specVersion": {
+            "type": "string",
+            "description": "The specification version of this descriptor",
+            "const": "v2"
+        },
+        "dataProductId": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "mpmCode": {
+                    "type": "string"
+                }
+            },
+            "description": "Id of the Data product which is \"contains\" this Data Product",
+            "required": [
+                "mpmCode"
+            ]
+        },
+        "outputPorts": {
+            "type": "array",
+            "items": {
+                "$ref": "#/$defs/outputPort"
+            }
+        },
+        "workloads": {
+            "type": "array",
+            "items": {
+                "$ref": "#/$defs/workload"
+            }
+        }
+    },
+    "required": [
+        "specVersion",
+        "outputPorts",
+        "workloads",
+        "dataProductId"
+    ],
+    "$defs": {
+        "resourceType": {
+            "type": "string",
+            "enum": [
+                "event",
+                "parallel read",
+                "view"
+            ]
+        },
+        "outputPort": {
+            "type": "object",
+            "description": "name, version and resourceType triplet is the unique identifier of this output port and refers to a 'basic' platform communication interface instance",
+            "properties": {
+                "name": {
+                    "description": "Name of the underlying object of this output port",
+                    "type": "string"
+                },
+                "version": {
+                    "type": "string",
+                    "description": "Version of the underlying object of this output port"
+                },
+                "resourceType": {
+                    "$ref": "#/$defs/resourceType"
+                },
+                "status": {
+                    "type": "string",
+                    "description": "status of this output port",
+                    "enum": [
+                        "experimental",
+                        "stable",
+                        "deprecated"
+                    ]
+                },
+                "displayName": {
+                    "description": "Optional name used for display purposes",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "Description of this output port",
+                    "type": "string"
+                },
+                "creationDate": {
+                    "description": "When this output port has been created",
+                    "format": "date-time",
+                    "type": "string"
+                },
+                "startDate": {
+                    "description": "The first business date present in the dataset, this can be expressed either as a date-time or a duration backwards from current time, ISO 8601 ABNF for duration",
+                    "type": "string",
+                    "anyOf": [
+                        {
+                            "format": "date-time"
+                        },
+                        {
+                            "format": "duration"
+                        }
+                    ],
+                    "examples": [
+                        "2018-11-13T20:20:39+00:00",
+                        "P3D"
+                    ]
+                },
+                "processDescription": {
+                    "description": "Important information about how this output port is operated, should contain also links to external documentation",
+                    "type": "string"
+                },
+                "slo": {
+                    "$ref": "#/$defs/slo"
+                },
+                "tags": {
+                    "description": "Tags at output port Product level they should be defined as tag categories following OpenMetadata standard https://docs.open-metadata.org/openmetadata/schemas/entities/tagcategory",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "dependsOn": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "name": {
+                                "type": "string",
+                                "description": "name of the dependant output port"
+                            },
+                            "version": {
+                                "type": "string",
+                                "description": "version of the dependant output port"
+                            },
+                            "resourceType": {
+                                "$ref": "#/$defs/resourceType",
+                                "description": "resourceType of the dependant output port"
+                            },
+                            "mpmCode": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "name",
+                            "version",
+                            "resourceType",
+                            "mpmCode"
+                        ]
+                    },
+                    "description": "An output port could depend on other output ports of the same data product, for example a SQL Output port could be dependent on a Raw Output Port because it is only an external table. Here we should add the `id`s of the output ports"
+                }
+            },
+            "required": [
+                "name",
+                "version",
+                "resourceType",
+                "displayName",
+                "creationDate",
+                "startDate",
+                "slo",
+                "tags",
+                "status"
+            ]
+        },
+        "slo": {
+            "type": "object",
+            "description": "Service Level Objective of the output port",
+            "properties": {
+                "intervalOfChange": {
+                    "type": "string",
+                    "format": "duration",
+                    "examples": [
+                        "P3D"
+                    ],
+                    "description": "How often changes in the data are reflected"
+                },
+                "timeliness": {
+                    "type": "string",
+                    "format": "duration",
+                    "examples": [
+                        "P3D"
+                    ],
+                    "description": "The skew between the time that a business fact occurs and when it becomes visibile in the data"
+                }
+            }
+        },
+        "workload": {
+            "type": "object",
+            "description": "a workload, an active part of this component",
+            "required": [
+                "name",
+                "scheduling",
+                "qualifiedName"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "displayName": {
+                    "description": "Optional name used for display purposes",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "Description of this workload",
+                    "type": "string"
+                },
+                "scheduling": {
+                    "anyOf": [
+                        {
+                            "type": "string",
+                            "description": "reference to ControlM scheduling of this workload"
+                        },
+                        {
+                            "type": "string",
+                            "description": "information derived from the template (i.e. for streaming it's always the triggerInterval)"
+                        }
+                    ]
+                },
+                "qualifiedName": {
+                    "type": "string",
+                    "description": "technical reference to the workload, for example the step name (for streaming) or main class name for batch business service"
+                }
+            }
+        }
+    }
+}

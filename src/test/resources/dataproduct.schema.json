@@ -1,0 +1,183 @@
+{
+    "$id": "https://agilelab.com/platform/dataproduct.schema.json",
+    "title": "Data Product Descriptor",
+    "description": "Data product descriptor:\n `sc`, `apmCode`, and `platformDomain` of a data product are shared among all the components of the data product. Every data product must expose an endpoint for observability. OPEN POINTS: snow, deployment order",
+    "type": "object",
+    "properties": {
+        "specVersion": {
+            "type": "string",
+            "description": "The specification version of this descriptor",
+            "const": "v2"
+        },
+        "displayName": {
+            "description": "Optional name used for display purposes",
+            "type": "string"
+        },
+        "description": {
+            "description": "detailed description about what functional area this DP is representing, what purpose has and business related information.",
+            "type": "string"
+        },
+        "businessGlossary": {
+            "type": "object",
+            "additionalProperties": {
+                "type": "string"
+            },
+            "description": "Any number of key values useful to define a business glossary in order to make comments and doc about output ports of this data product easier to understand"
+        },
+        "status": {
+            "$ref": "#/$defs/dataProductStatus"
+        },
+        "maturity": {
+            "$ref": "#/$defs/dataProductMaturity"
+        },
+        "tags": {
+            "description": "Tags at Data Product level they should be defined as tag categories following OpenMetadata standard https://docs.open-metadata.org/openmetadata/schemas/entities/tagcategory",
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "components": {
+            "type": "array",
+            "items": {
+                "$ref": "#/$defs/componentRef"
+            }
+        },
+        "observability": {
+            "$ref": "#/$defs/observability"
+        },
+        "staging": {
+            "$ref": "#/$defs/apiRef"
+        }
+    },
+    "required": [
+        "components",
+        "description",
+        "status",
+        "maturity",
+        "specVersion",
+        "observability"
+    ],
+    "$defs": {
+        "mpmCode": {
+            "type": "string",
+            "examples": [
+                "mp01060"
+            ]
+        },
+        "apiRef": {
+            "type": "object",
+            "description": "Object with observability API info in order to build the endpoint to be called to obtain observability data",
+            "properties": {
+                "host": {
+                    "type": "string",
+                    "description": "The hostname of the observability API of this data product, default value it is exposed by the DNS name composed as `${mainMicroserviceEntity.microserviceEntityName}.${mainMicroserviceEntity.sc}-${apmCode}-${dataproductName}-${env}-platform-namespace`. This field may contain a placeholder for the environment, any occurrence of `{ENV}` is substitued by the current environment.",
+                    "examples": [
+                        "metlctranslatevent.glin-ap31312dp01506-{ENV}-platform-namespace"
+                    ],
+                    "default": "localhost"
+                },
+                "protocol": {
+                    "type": "string",
+                    "enum": [
+                        "http",
+                        "https"
+                    ],
+                    "default": "http"
+                },
+                "port": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "exclusiveMaximum": 65536,
+                    "default": 80
+                },
+                "path": {
+                    "type": "string",
+                    "description": "The path of the url where the observability endpoint is available",
+                    "examples": [
+                        "/observability"
+                    ],
+                    "default": "/observability"
+                }
+            },
+            "required": [
+                "host","port","path","protocol"
+            ]
+        },
+        "observability": {
+            "description": "Observability is exposed as a set of API, split in data quality, data downtime and process quality. Each API is exposed by its own API (see under infrastructure/platform/api of a dataproduct template for more info). This field is used only to reference where such APIs are deployed for the given data product instance",
+            "type": "object",
+            "properties": {
+                "apiRef": {
+                    "$ref": "#/$defs/apiRef",
+                    "description": "Deprecated field in favor of dataQualityApiRef, it's a reference to the data quality API endpoint"
+                },
+                "dataQualityApiRef": {
+                    "$ref": "#/$defs/apiRef",
+                    "description": "Reference to the data quality API endpoint"
+                },
+                "processQualityApiRef": {
+                    "$ref": "#/$defs/apiRef",
+                    "description": "Reference to the process quality API endpoint"
+                },
+                "dataDowntimeApiRef": {
+                    "$ref": "#/$defs/apiRef",
+                    "description": "Reference to the data downtime API endpoint"
+                }
+            },
+            "required": [
+                "dataQualityApiRef","processQualityApiRef","dataDowntimeApiRef"
+            ]
+        },
+        "componentRef": {
+            "description": "A component that is part of this data product. The link between a data product and a component is mutual, the data product should reference the component and the component should reference the data product, otherwise the link is not valid and the consistency check should fail. Since components (microservices and business services) came earlier than data products, we should allow components not associated to a data product, but not the other way around. Also we should check that a component is not part of more than data product. When a component is associated with a data product, the deployment of the microservice should be automatically disabled. This is because data products should be treated as atomic entities with regard to deployment. The deployment of a data product performs the deployment of all its components.",
+            "type": "object",
+            "properties": {
+                "name": {
+                    "description": "The name of the component, it can be found in `infrastructure/helm/values.yaml` under `microserviceName` field",
+                    "type": "string"
+                },
+                "mpmCode": {
+                    "$ref": "#/$defs/mpmCode",
+                    "description": "The component id of the component, it is the second part of the value found in `infrastructure/helm/values.yaml` under `giasId` field, starting with `mp`"
+                },
+                "version": {
+                    "description": "Version of the component that this data product references and deploys, reserved keyword is 'latest' that indicates the latest released version of the component (same as docker convention)",
+                    "type": "string",
+                    "examples": [
+                        "0.1",
+                        "0.33"
+                    ],
+                    "default": "latest"
+                }
+            },
+            "additionalProperties": false,
+            "required": [
+                "mpmCode",
+                "version"
+            ]
+        },
+        "dataProductMaturity": {
+            "description": "This is an enum to let the consumer understand if it is a tactical solution or not. It is really useful during migration from DWH or data lake",
+            "type": "string",
+            "enum": [
+                "Tactical",
+                "Strategy"
+            ]
+        },
+        "dataProductStatus": {
+            "description": "This is an enum representing the status of this version of the DP",
+            "type": "string",
+            "enum": [
+                "to_be_implemented",
+                "mock",
+                "deleted",
+                "created",
+                "implemented",
+                "deployed",
+                "deprecated",
+                "ghost"
+            ]
+        }
+    }
+}

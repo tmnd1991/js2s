@@ -1,0 +1,88 @@
+package js2s.generator
+
+import js2s.generator.ScalaMetaUtils._
+
+import scala.meta._
+
+class ScalaMetaUtilsTest extends munit.FunSuite {
+  test("add ancestor") {
+
+    assertEquals(
+      addAncestor(
+        productDef(
+          name = "Pippo",
+          params = Term.Param(Nil, Term.Name("a"), Some(Type.Name("String")), None) :: Nil,
+          superClass = None
+        ),
+        superClass = Type.Name("Pluto")
+      ).structure,
+      productDef(
+        name = "Pippo",
+        params = Term.Param(Nil, Term.Name("a"), Some(Type.Name("String")), None) :: Nil,
+        superClass = Some(Type.Name("Pluto"))
+      ).structure
+    )
+  }
+
+  test("sealed trait") {
+    assertEquals(traitDef("Giovanni").structure, q"sealed trait Giovanni extends Product with Serializable".structure)
+  }
+
+
+  test("enum") {
+    val expectedEnum =
+      q"""
+      object MyEnum {
+        def valueOf(s: String): Option[MyEnum] = {
+          s match {
+            case EnumValue1.value => Some(EnumValue1)
+            case EnumValue2.value => Some(EnumValue2)
+            case EnumValue3.value => Some(EnumValue3)
+            case _ => None
+          }
+        }
+        case object EnumValue1 extends MyEnum {
+          val value: String = "enumValue1"
+        }
+        case object EnumValue2 extends MyEnum {
+          val value: String = "enumValue2"
+        }
+        case object EnumValue3 extends MyEnum {
+          val value: String = "enumValue3"
+        }
+      }
+      sealed trait MyEnum extends Product with Serializable {
+        val value: String
+      }
+  """.stats
+    val actualEnum = enumDef("MyEnum", Set("enumValue1", "enumValue2", "enumValue3"))
+    assertEquals(actualEnum.companion.structure, expectedEnum.head.structure)
+    assertEquals(actualEnum.root.structure, expectedEnum.drop(1).head.structure)
+  }
+
+  test("union"){
+    val expectedUnion = q"""sealed trait Person extends Product with Serializable
+      case class Customer(name: String) extends Person
+      case class NotCustomer(name: String) extends Person
+   """.stats match {
+      case (root: Defn.Trait) :: (one: Defn.Class) :: (two: Defn.Class) :: Nil => UnionDef(root, one :: two :: Nil)
+      case _ => fail("did not generate expected tree")
+    }
+    val actualUnion = unionDef(
+      "Person",
+      List(
+        productDef("Customer", Term.Param(Nil, Term.Name("name"), Some(Type.Name("String")), None) :: Nil, None),
+        productDef("NotCustomer", Term.Param(Nil, Term.Name("name"), Some(Type.Name("String")), None) :: Nil, None)
+      )
+    )
+    assertEquals(expectedUnion.root.structure, actualUnion.root.structure)
+    assertEquals(expectedUnion.values.map(_.structure), actualUnion.values.map(_.structure))
+
+  }
+
+  test("make optional") {
+    assertEquals(makeOptional(q"""def f(a: Int): String = a.toString()""".paramss.head.head).structure,
+      q"def f(a: Option[Int]): Option[String] = a.map(_.toString)".paramss.head.head.structure)
+  }
+
+}
