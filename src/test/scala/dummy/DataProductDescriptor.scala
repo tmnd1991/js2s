@@ -1,1 +1,0 @@
-case class DataProductDescriptor(tags: Option[List[String]], status: DataProductStatus, businessGlossary: Option[Map[String]], staging: Option[ApiRef], observability: Observability, description: String, displayName: Option[String], maturity: DataProductMaturity, components: List[ComponentRef], specVersion: SpecVersion.type)

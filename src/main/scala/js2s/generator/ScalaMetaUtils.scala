@@ -57,7 +57,7 @@ object ScalaMetaUtils {
                   None,
                   applySome(vd)
                 )
-              }.toList :+ meta.Case(
+              } :+ meta.Case(
                 Pat.Wildcard(),
                 None,
                 NoneTerm
@@ -133,7 +133,7 @@ object ScalaMetaUtils {
   }
 
   def mapDef(valueType: Type): MapDef = {
-    MapDef(Type.Apply(Type.Name("Map"), List(valueType)))
+    MapDef(Type.Apply(Type.Name("Map"), List(StringType, valueType)))
   }
 
   private val NoneTerm = Term.Name("None")
@@ -193,6 +193,6 @@ case class ArrayDef(tn: Type) extends SimplifiedDef {
 }
 
 case class MapDef(tn: Type) extends SimplifiedDef {
-  val symbols = Map.empty
+  val symbols: Map[Type, SimplifiedDef] = Map.empty
   override val t: Type = tn
 }
