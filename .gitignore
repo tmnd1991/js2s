@@ -233,3 +233,4 @@ $RECYCLE.BIN/
 *.lnk
 
 # End of https://www.toptal.com/developers/gitignore/api/intellij,scala,sbt,java,osx,macos,windows
+src/test/scala/js2s/dummy/

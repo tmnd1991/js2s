@@ -3,6 +3,13 @@ scalaVersion := "2.12.17"
 libraryDependencies += "org.scalameta" %% "scalameta" % "4.6.0"
 libraryDependencies += "com.github.erosb" % "everit-json-schema" % "1.14.1"
 libraryDependencies += "org.scalameta" %% "munit" % "0.7.29" % Test
+val circeVersion = "0.14.1"
+
+libraryDependencies ++= Seq(
+  "io.circe" %% "circe-core",
+  "io.circe" %% "circe-generic",
+  "io.circe" %% "circe-parser"
+).map(_ % circeVersion)
 scalacOptions ++= Seq(
   "-deprecation",                      // Emit warning and location for usages of deprecated APIs.
   "-encoding", "utf-8",                // Specify character encoding used by source files.

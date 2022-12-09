@@ -85,4 +85,21 @@ class ScalaMetaUtilsTest extends munit.FunSuite {
       q"def f(a: Option[Int]): Option[String] = a.map(_.toString)".paramss.head.head.structure)
   }
 
+  test("buildImport 5") {
+    val expected = q"import a.b.c.d.e.P"
+    val actual = Import(buildImport("a.b.c.d.e.P") :: Nil)
+    assertEquals(actual.structure, expected.structure)
+  }
+
+  test("buildImport 1") {
+    val expected = q"import a.P"
+    val actual = Import(buildImport("a.P") :: Nil)
+    assertEquals(actual.structure, expected.structure)
+  }
+
+  test("buildImport 2") {
+    val expected = q"import a.b.P"
+    val actual = Import(buildImport("a.b.P") :: Nil)
+    assertEquals(actual.structure, expected.structure)
+  }
 }

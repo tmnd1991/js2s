@@ -1,6 +1,6 @@
 package js2s.generator
 
-import scala.meta.{Ctor, Decl, Defn, Init, Lit, Mod, Pat, Self, Template, Term, Type}
+import scala.meta.{Ctor, Decl, Defn, Importee, Importer, Init, Lit, Mod, Pat, Self, Template, Term, Type}
 
 object ScalaMetaUtils {
   def constDef(name: String, value: String): Defn.Object = {
@@ -134,6 +134,27 @@ object ScalaMetaUtils {
 
   def mapDef(valueType: Type): MapDef = {
     MapDef(Type.Apply(Type.Name("Map"), List(StringType, valueType)))
+  }
+
+  def buildImport(fqn: String): Importer = {
+    val splits = fqn.split("\\.", -1).toList
+    val importee = Importee.Name(meta.Name(splits.last))
+
+    def r(toProcess: List[String], z: Term.Select): Term.Select = {
+      toProcess match {
+        case Nil => z
+        case h :: t => Term.Select(r(t, z), Term.Name(h))
+      }
+    }
+
+    val res = splits.dropRight(1) match {
+      case first :: Nil =>
+        Term.Name(first)
+      case first :: second :: t =>
+        r(t.reverse, Term.Select(Term.Name(first), Term.Name(second)))
+      case Nil => throw new IllegalArgumentException("Import of only one term is not syntactically correct")
+    }
+    Importer(res, importee :: Nil)
   }
 
   private val NoneTerm = Term.Name("None")
