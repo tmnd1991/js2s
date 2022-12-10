@@ -1,0 +1,56 @@
+{
+  "$id": "https://agilelab.com/platform/dataproduct.schema.json",
+  "title": "Response",
+  "description": "",
+  "type": "object",
+  "properties": {
+    "status": {
+      "type": "integer"
+    },
+    "data": {
+      "oneOf": [
+        {"$ref": "#/$defs/success"},
+        {"$ref": "#/$defs/failure"}
+      ],
+      "discriminator": "type"
+    }
+  },
+  "required": [
+    "status",
+    "data"
+  ],
+  "$defs": {
+    "success": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "string",
+          "examples": [
+            "mp01060"
+          ]
+        },
+        "type": {
+          "type": "string",
+          "const": "success"
+        }
+      },
+      "required": ["value", "type"]
+    },
+    "failure": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "string",
+          "examples": [
+            "mp01060"
+          ]
+        },
+        "type": {
+          "type": "string",
+          "const": "failure"
+        }
+      },
+      "required": ["value", "type"]
+    }
+  }
+}
