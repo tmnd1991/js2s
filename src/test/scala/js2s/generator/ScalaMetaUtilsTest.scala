@@ -61,21 +61,38 @@ class ScalaMetaUtilsTest extends munit.FunSuite {
 
   test("union") {
     val expectedUnion = q"""sealed trait Person extends Product with Serializable
-      case class Customer(name: String) extends Person
-      case class NotCustomer(name: String) extends Person
+      case class Customer(name: String) extends Person { val t: String = "customer" }
+      case class NotCustomer(name: String) extends Person { val t: String = "notCustomer" }
    """.stats match {
-      case (root: Defn.Trait) :: (one: Defn.Class) :: (two: Defn.Class) :: Nil => UnionDef(root, one :: two :: Nil)
-      case _                                                                   => fail("did not generate expected tree")
+      case (root: Defn.Trait) :: (one: Defn.Class) :: (two: Defn.Class) :: Nil =>
+        UnionDef(root, ProductDef(one, Some("t" -> "customer")) :: ProductDef(two, Some("t" -> "notCustomer")) :: Nil)
+      case _ =>
+        fail("did not generate expected tree")
     }
     val actualUnion = unionDef(
       "Person",
       List(
-        productDef("Customer", Term.Param(Nil, Term.Name("name"), Some(Type.Name("String")), None) :: Nil, None),
-        productDef("NotCustomer", Term.Param(Nil, Term.Name("name"), Some(Type.Name("String")), None) :: Nil, None)
+        ProductDef(
+          productDef(
+            "Customer",
+            Term.Param(Nil, Term.Name("name"), Some(Type.Name("String")), None) :: Nil,
+            None
+          ),
+          None
+        ).withDiscriminator("t", "customer"),
+        ProductDef(
+          productDef(
+            "NotCustomer",
+            Term.Param(Nil, Term.Name("name"), Some(Type.Name("String")), None) :: Nil,
+            None
+          ),
+          None
+        ).withDiscriminator("t", "notCustomer")
       )
     )
     assertEquals(expectedUnion.root.structure, actualUnion.root.structure)
-    assertEquals(expectedUnion.values.map(_.structure), actualUnion.values.map(_.structure))
+    assertEquals(expectedUnion.values.map(_.value.structure), actualUnion.values.map(_.value.structure))
+    assertEquals(expectedUnion.values.map(_.ofUnion), actualUnion.values.map(_.ofUnion))
 
   }
 

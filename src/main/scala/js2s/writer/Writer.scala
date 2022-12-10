@@ -32,13 +32,13 @@ class Writer {
 
   def materializeFileContents(defs: List[SimplifiedDef]): Map[String, List[meta.Stat]] = {
     defs.collect {
-      case ProductDef(value) =>
+      case ProductDef(value, _) =>
         s"${value.name.value}.scala" -> (value :: Nil)
       case EnumDef(root, companion) =>
         s"${root.name.value}.scala" -> (root :: companion :: Nil)
       case UnionDef(root, values) =>
-        s"${root.name.value}.scala" -> (root :: values)
-      case ConstDef(value) =>
+        s"${root.name.value}.scala" -> (root :: values.map(_.value))
+      case ConstDef(value, _) =>
         s"${value.name.value}.scala" -> (value :: Nil)
 //      case ArrayDef(_) =>
 //        List.empty

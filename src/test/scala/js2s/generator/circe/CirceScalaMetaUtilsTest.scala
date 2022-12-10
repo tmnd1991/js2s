@@ -1,5 +1,8 @@
 package js2s.generator.circe
 
+import js2s.generator.ProductDef
+import js2s.generator.ScalaMetaUtils.{productDef, unionDef}
+
 class CirceScalaMetaUtilsTest extends munit.FunSuite {
 
   import scala.meta._
@@ -52,6 +55,32 @@ class CirceScalaMetaUtilsTest extends munit.FunSuite {
       expected.stats.map(_.structure)
     )
 
+  }
+
+  test("generate codec for union") {
+    val actualUnion = unionDef(
+      "Person",
+      List(
+        ProductDef(
+          productDef(
+            "Customer",
+            Term.Param(Nil, Term.Name("name"), Some(Type.Name("String")), None) :: Nil,
+            None
+          ),
+          None
+        ).withDiscriminator("t", "customer"),
+        ProductDef(
+          productDef(
+            "NotCustomer",
+            Term.Param(Nil, Term.Name("name"), Some(Type.Name("String")), None) :: Nil,
+            None
+          ),
+          None
+        ).withDiscriminator("t", "notCustomer")
+      )
+    )
+    (CirceScalaMetaUtils.circeImports.stats ++ CirceScalaMetaUtils.circeImportsForUnions.stats ++
+      CirceScalaMetaUtils.buildCodecForUnion(actualUnion)).map(_.syntax).foreach(println)
   }
 
 }

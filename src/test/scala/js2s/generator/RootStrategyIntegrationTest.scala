@@ -26,13 +26,12 @@ class RootStrategyIntegrationTest extends munit.FunSuite {
       val res                                  = os.generate(None, parsedSchema, Map.empty)
       val (nd, allD: Map[Type, SimplifiedDef]) = res.get
       val code                                 = new Writer().materializeFileContents(nd :: allD.values.toList).values.flatten.mkString("\n")
-//      println(code)
-      val toolbox = currentMirror.mkToolBox()
+      val toolbox                              = currentMirror.mkToolBox()
       toolbox.compile(toolbox.parse(code))()
     }
     assertEquals(res.isSuccess, true, res.get)
   }
-  test("union test case".ignore) {
+  test("union test case") {
     val res = scala.util.Try {
       val loader = SchemaLoader.builder
         .schemaJson(new JSONObject(new JSONTokener(getClass.getClassLoader.getResourceAsStream("union.schema.json"))))
@@ -47,8 +46,7 @@ class RootStrategyIntegrationTest extends munit.FunSuite {
       val res                                  = os.generate(None, parsedSchema, Map.empty)
       val (nd, allD: Map[Type, SimplifiedDef]) = res.get
       val code                                 = new Writer().materializeFileContents(nd :: allD.values.toList).values.flatten.mkString("\n")
-//      println(code)
-      val toolbox = currentMirror.mkToolBox()
+      val toolbox                              = currentMirror.mkToolBox()
       toolbox.compile(toolbox.parse(code))()
     }
     assertEquals(res.isSuccess, true, res.get)

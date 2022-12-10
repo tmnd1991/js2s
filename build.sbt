@@ -4,7 +4,7 @@ libraryDependencies += "org.scalameta" %% "scalameta" % "4.6.0"
 libraryDependencies += "com.github.erosb" % "everit-json-schema" % "1.14.1"
 libraryDependencies += "org.scalameta" %% "munit" % "0.7.29" % Test
 val circeVersion = "0.14.1"
-
+scalafmtOnCompile := true
 libraryDependencies ++= Seq(
   "io.circe" %% "circe-core",
   "io.circe" %% "circe-generic",

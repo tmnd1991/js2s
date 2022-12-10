@@ -9,10 +9,11 @@
     },
     "data": {
       "oneOf": [
-        {"$ref": "#/$defs/success"},
-        {"$ref": "#/$defs/failure"}
+        {"$ref": "#/$defs/A"},
+        {"$ref": "#/$defs/B"},
+        {"$ref": "#/$defs/C"}
       ],
-      "discriminator": "type"
+      "discriminator": "t"
     }
   },
   "required": [
@@ -20,7 +21,7 @@
     "data"
   ],
   "$defs": {
-    "success": {
+    "A": {
       "type": "object",
       "properties": {
         "value": {
@@ -29,14 +30,14 @@
             "mp01060"
           ]
         },
-        "type": {
+        "t": {
           "type": "string",
-          "const": "success"
+          "const": "aa"
         }
       },
-      "required": ["value", "type"]
+      "required": ["value", "t"]
     },
-    "failure": {
+    "B": {
       "type": "object",
       "properties": {
         "value": {
@@ -45,12 +46,28 @@
             "mp01060"
           ]
         },
-        "type": {
+        "t": {
           "type": "string",
-          "const": "failure"
+          "const": "bb"
         }
       },
-      "required": ["value", "type"]
+      "required": ["value", "t"]
+    },
+    "C": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "string",
+          "examples": [
+            "mp01060"
+          ]
+        },
+        "t": {
+          "type": "string",
+          "const": "cc"
+        }
+      },
+      "required": ["value", "t"]
     }
   }
 }

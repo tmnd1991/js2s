@@ -2,35 +2,65 @@ package js2s.generator
 
 import org.everit.json.schema._
 
+import scala.annotation.tailrec
 import scala.jdk.CollectionConverters.{
   asScalaBufferConverter,
   collectionAsScalaIterableConverter,
   mapAsScalaMapConverter
 }
-import scala.meta.{Defn, Term, Type}
+import scala.meta.{Term, Type}
 
 class RootStrategy(es: EnumStrategy, ps: PrimitiveStrategy, cs: ConstantStrategy, nameChooser: NameStrategy) {
 
-  def generate(
+  private def checkDiscriminator(discriminatorField: Option[String], as: ArraySchema): Unit =
+    if (discriminatorField.isDefined) {
+      throw new RuntimeException(s"an array cannot be part of a 'oneOf': $as")
+    }
+
+  private def checkDiscriminator(discriminatorField: Option[String], os: ObjectSchema): Unit =
+    discriminatorField match {
+      case Some(field) =>
+        if (!os.getRequiredProperties.contains(field)) {
+          throw new RuntimeException(s"discriminator field ($field) should be a required property of the object: $os")
+        }
+      case None =>
+    }
+
+  private def checkDiscriminator(discriminatorField: Option[String], cs: CombinedSchema): Unit =
+    if (discriminatorField.isDefined) {
+      throw new RuntimeException(s"a combined schema cannot be part of a 'oneOf': $cs")
+    }
+
+  @tailrec
+  private def generate(
     fieldName: Option[String],
     schema: Schema,
-    symbols: Map[Type, SimplifiedDef]
+    symbols: Map[Type, SimplifiedDef],
+    discriminatorField: Option[String]
   ): Option[(SimplifiedDef, Map[Type, SimplifiedDef])] =
     schema match {
       case o: ObjectSchema =>
-        mapCase(o, symbols).orElse(productCase(fieldName, schema, symbols, o))
+        checkDiscriminator(discriminatorField, o)
+        mapCase(o, symbols).orElse(productCase(fieldName, symbols, o, discriminatorField))
       case cs: CombinedSchema =>
+        checkDiscriminator(discriminatorField, cs)
         cs.getCriterion.toString match {
           case "oneOf" => unionCase(fieldName, schema, symbols, cs)
           case _       => None
         }
       case rs: ReferenceSchema =>
-        generate(fieldName, rs.getReferredSchema, symbols)
+        generate(fieldName, rs.getReferredSchema, symbols, discriminatorField)
       case as: ArraySchema =>
+        checkDiscriminator(discriminatorField, as)
         val (it, newSym) = this.resolve(fieldName, as.getAllItemSchema, symbols)
         Some(ArrayDef(Type.Apply(Type.Name("List"), it.t :: Nil)) -> (symbols ++ newSym))
       case _ => None
     }
+  def generate(
+    fieldName: Option[String],
+    schema: Schema,
+    symbols: Map[Type, SimplifiedDef]
+  ): Option[(SimplifiedDef, Map[Type, SimplifiedDef])] = generate(fieldName, schema, symbols, None)
 
   private def unionCase(
     fieldName: Option[String],
@@ -38,17 +68,19 @@ class RootStrategy(es: EnumStrategy, ps: PrimitiveStrategy, cs: ConstantStrategy
     symbols: Map[Type, SimplifiedDef],
     cs: CombinedSchema
   ) = {
-    val (subTypes, updatedSymbols) = cs.getSubschemas.asScala.toList.foldLeft((List.empty[Defn.Class], symbols)) {
+    val discriminator = Option(cs.getUnprocessedProperties.get("discriminator"))
+      .map(_.toString)
+      .orElse(throw new RuntimeException(s"unions must have a discriminator field: $cs does not"))
+
+    val (subTypes, updatedSymbols) = cs.getSubschemas.asScala.toList.foldLeft((List.empty[ProductDef], symbols)) {
       case ((zSubtypes, sym), s) =>
-        val (newType, newDefs) = this.resolve(fieldName, s, sym)
+        val (newType, newDefs) = this
+          .generate(fieldName, s, sym, discriminator)
+          .getOrElse(throw new RuntimeException(s"only products can be part of 'oneOf'"))
+
         val nts = newType match {
-          case PrimitiveDef(_)   => List.empty
-          case ProductDef(value) => value :: Nil
-          case EnumDef(_, _)     => Nil
-          case UnionDef(_, _)    => Nil
-          case ConstDef(_)       => Nil
-          case ArrayDef(_)       => Nil
-          case MapDef(_)         => Nil
+          case pd: ProductDef => pd :: Nil
+          case _              => Nil
         }
         (nts ::: zSubtypes) -> (sym ++ newDefs)
     }
@@ -57,12 +89,15 @@ class RootStrategy(es: EnumStrategy, ps: PrimitiveStrategy, cs: ConstantStrategy
 
   private def productCase(
     fieldName: Option[String],
-    schema: Schema,
     symbols: Map[Type, SimplifiedDef],
-    o: ObjectSchema
+    o: ObjectSchema,
+    discriminatorField: Option[String]
   ) = {
     val requiredProps = o.getRequiredProperties.asScala.toSet
-    val (params, updatedSymbols) = o.getPropertySchemas.asScala.toList.foldLeft((List.empty[Term.Param], symbols)) {
+    val propsToProcess = discriminatorField.fold(o.getPropertySchemas.asScala.toList) { f =>
+      o.getPropertySchemas.asScala.toList.filter(_._1 != f)
+    }
+    val (params, updatedSymbols) = propsToProcess.foldLeft((List.empty[Term.Param], symbols)) {
       case ((zParams, sym), (fieldName, s)) =>
         val (newType, newDefs) = this.resolve(Some(fieldName), s, sym)
         val tName              = newType.t
@@ -70,8 +105,12 @@ class RootStrategy(es: EnumStrategy, ps: PrimitiveStrategy, cs: ConstantStrategy
         val realParam          = if (requiredProps.contains(fieldName)) param else ScalaMetaUtils.makeOptional(param)
         (realParam :: zParams) -> (sym ++ newDefs)
     }
-    nameChooser(fieldName, schema).map { n =>
-      ProductDef(ScalaMetaUtils.productDef(n, params, None)) -> updatedSymbols
+    nameChooser(fieldName, o).map { n =>
+      val withoutDisc = ScalaMetaUtils.productDef(n, params, None)
+      discriminatorField.fold(ProductDef(withoutDisc, None) -> updatedSymbols) { df =>
+        val v = cs.generate(Some(df), o.getPropertySchemas.get(df)).get.permittedValue
+        ProductDef(withoutDisc, None).withDiscriminator(df, v) -> updatedSymbols
+      }
     }
   }
 

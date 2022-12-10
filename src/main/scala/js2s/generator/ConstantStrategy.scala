@@ -16,7 +16,8 @@ class ConstantStrategy(nameChooser: NameStrategy) {
               constS <- cs.getSubschemas.asScala.collectFirst { case e: ConstSchema => e }
               _      <- cs.getSubschemas.asScala.collectFirst { case s: StringSchema => s }
             } yield {
-              ConstDef(ScalaMetaUtils.constDef(n, constS.getPermittedValue.toString))
+              val pm = constS.getPermittedValue.toString
+              ConstDef(ScalaMetaUtils.constDef(n, pm), pm)
             }
           case _ => None
         }

@@ -104,9 +104,9 @@ object ScalaMetaUtils {
       }
     )
 
-  def unionDef(name: String, members: List[Defn.Class]): UnionDef = {
+  def unionDef(name: String, members: List[ProductDef]): UnionDef = {
     val root = traitDef(name)
-    UnionDef(root, members.map(defn => addAncestor(defn, root.name)))
+    UnionDef(root, members.map(defn => defn.copy(value = addAncestor(defn.value, root.name))))
   }
 
   def productDef(name: String, params: List[Term.Param], superClass: Option[Type.Name]): Defn.Class = {
@@ -178,9 +178,26 @@ case class PrimitiveDef(value: Type.Name) extends SimplifiedDef {
   val t: Type                                    = value
 }
 
-case class ProductDef(value: Defn.Class) extends SimplifiedDef {
+case class ProductDef(value: Defn.Class, ofUnion: Option[(String, String)]) extends SimplifiedDef {
   val symbols: Map[meta.Type, SimplifiedDef] = Map(value.name -> this)
   val t: Type                                = value.name
+
+  def withDiscriminator(discriminatorField: String, discriminatorValue: String): ProductDef =
+    this.copy(
+      value = this.value.copy(
+        templ = this.value.templ.copy(
+          stats = List(
+            Defn.Val(
+              Nil,
+              List(meta.Pat.Var(Term.Name(discriminatorField))),
+              Some(Type.Name("String")),
+              meta.Lit.String(discriminatorValue)
+            )
+          )
+        )
+      ),
+      ofUnion = Some(discriminatorField -> discriminatorValue)
+    )
 }
 
 case class EnumDef(root: Defn.Trait, companion: Defn.Object) extends SimplifiedDef {
@@ -188,12 +205,12 @@ case class EnumDef(root: Defn.Trait, companion: Defn.Object) extends SimplifiedD
   val t: Type                                = root.name
 }
 
-case class UnionDef(root: Defn.Trait, values: List[Defn.Class]) extends SimplifiedDef {
+case class UnionDef(root: Defn.Trait, values: List[ProductDef]) extends SimplifiedDef {
   val symbols: Map[meta.Type, SimplifiedDef] = Map(root.name -> this)
   val t: Type                                = root.name
 }
 
-case class ConstDef(value: Defn.Object) extends SimplifiedDef {
+case class ConstDef(value: Defn.Object, permittedValue: String) extends SimplifiedDef {
   val symbols: Map[meta.Type, SimplifiedDef] = Map(Type.Name(value.name.value) -> this)
   val t: Type                                = Type.Singleton(value.name)
 }

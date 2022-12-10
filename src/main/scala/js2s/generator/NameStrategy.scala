@@ -25,20 +25,21 @@ class NameStrategy {
       .orElse(fieldName.map(_.capitalize))
       .orElse(Option(s.getTitle).map(sanitiseTitle))
 
-  private def constantValue(s: Schema): Option[String] = {
-    case cs: CombinedSchema =>
-      val value = cs.getSubschemas.asScala.collectFirst { case c: ConstSchema =>
-        c.getPermittedValue.toString
-      }
-      (cs.getCriterion.toString, value) match {
-        case ("allOf", Some(v)) =>
-          Some(sanitiseTitle(v))
-        case _ =>
-          None
-      }
-    case _ =>
-      None
-  }
+  private def constantValue(s: Schema): Option[String] =
+    s match {
+      case cs: CombinedSchema =>
+        val value = cs.getSubschemas.asScala.collectFirst { case c: ConstSchema =>
+          c.getPermittedValue.toString
+        }
+        (cs.getCriterion.toString, value) match {
+          case ("allOf", Some(v)) =>
+            Some(sanitiseTitle(v))
+          case _ =>
+            None
+        }
+      case _ =>
+        None
+    }
 
   private def sanitiseTitle(s: String): String =
     s.split("\\s+", -1).map(_.capitalize).mkString("")
