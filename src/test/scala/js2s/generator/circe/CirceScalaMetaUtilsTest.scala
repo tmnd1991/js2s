@@ -47,10 +47,11 @@ class CirceScalaMetaUtilsTest extends munit.FunSuite {
       }
     }"""
 
-    assertEquals(CirceScalaMetaUtils.buildCodecForConst("js2s.dummy.zio.pippo.SpeccoVersione").map(_.structure),
-      expected.stats.map(_.structure))
+    assertEquals(
+      CirceScalaMetaUtils.buildCodecForConst("js2s.dummy.zio.pippo.SpeccoVersione").map(_.structure),
+      expected.stats.map(_.structure)
+    )
 
   }
-
 
 }

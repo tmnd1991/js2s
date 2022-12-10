@@ -32,12 +32,16 @@ class EnumStrategyTest() extends munit.FunSuite {
         |  }
         |}
         |""".stripMargin
-    val loader = SchemaLoader.builder.schemaJson(new JSONObject(new JSONTokener(schema))).draftV6Support.build()
+    val loader       = SchemaLoader.builder.schemaJson(new JSONObject(new JSONTokener(schema))).draftV6Support.build()
     val parsedSchema = loader.load().build().asInstanceOf[ObjectSchema]
-    val v = parsedSchema.getPropertySchemas.get("prot").asInstanceOf[ReferenceSchema].getReferredSchema
-    val res = new EnumStrategy(new NameStrategy).generate(Some("prot"), v)
-    assertEquals(res.get.root.structure, q"""sealed trait Protocol extends Product with Serializable{val value: String}""".structure)
-    assertEquals(res.get.companion.structure,
+    val v            = parsedSchema.getPropertySchemas.get("prot").asInstanceOf[ReferenceSchema].getReferredSchema
+    val res          = new EnumStrategy(new NameStrategy).generate(Some("prot"), v)
+    assertEquals(
+      res.get.root.structure,
+      q"""sealed trait Protocol extends Product with Serializable{val value: String}""".structure
+    )
+    assertEquals(
+      res.get.companion.structure,
       q"""object Protocol {
             def valueOf(s: String): Option[Protocol] = {
               s match {

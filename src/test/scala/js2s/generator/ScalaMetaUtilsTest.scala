@@ -28,7 +28,6 @@ class ScalaMetaUtilsTest extends munit.FunSuite {
     assertEquals(traitDef("Giovanni").structure, q"sealed trait Giovanni extends Product with Serializable".structure)
   }
 
-
   test("enum") {
     val expectedEnum =
       q"""
@@ -60,13 +59,13 @@ class ScalaMetaUtilsTest extends munit.FunSuite {
     assertEquals(actualEnum.root.structure, expectedEnum.drop(1).head.structure)
   }
 
-  test("union"){
+  test("union") {
     val expectedUnion = q"""sealed trait Person extends Product with Serializable
       case class Customer(name: String) extends Person
       case class NotCustomer(name: String) extends Person
    """.stats match {
       case (root: Defn.Trait) :: (one: Defn.Class) :: (two: Defn.Class) :: Nil => UnionDef(root, one :: two :: Nil)
-      case _ => fail("did not generate expected tree")
+      case _                                                                   => fail("did not generate expected tree")
     }
     val actualUnion = unionDef(
       "Person",
@@ -81,25 +80,27 @@ class ScalaMetaUtilsTest extends munit.FunSuite {
   }
 
   test("make optional") {
-    assertEquals(makeOptional(q"""def f(a: Int): String = a.toString()""".paramss.head.head).structure,
-      q"def f(a: Option[Int]): Option[String] = a.map(_.toString)".paramss.head.head.structure)
+    assertEquals(
+      makeOptional(q"""def f(a: Int): String = a.toString()""".paramss.head.head).structure,
+      q"def f(a: Option[Int]): Option[String] = a.map(_.toString)".paramss.head.head.structure
+    )
   }
 
   test("buildImport 5") {
     val expected = q"import a.b.c.d.e.P"
-    val actual = Import(buildImport("a.b.c.d.e.P") :: Nil)
+    val actual   = Import(buildImport("a.b.c.d.e.P") :: Nil)
     assertEquals(actual.structure, expected.structure)
   }
 
   test("buildImport 1") {
     val expected = q"import a.P"
-    val actual = Import(buildImport("a.P") :: Nil)
+    val actual   = Import(buildImport("a.P") :: Nil)
     assertEquals(actual.structure, expected.structure)
   }
 
   test("buildImport 2") {
     val expected = q"import a.b.P"
-    val actual = Import(buildImport("a.b.P") :: Nil)
+    val actual   = Import(buildImport("a.b.P") :: Nil)
     assertEquals(actual.structure, expected.structure)
   }
 }

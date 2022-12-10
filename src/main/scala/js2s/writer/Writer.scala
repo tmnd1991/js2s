@@ -8,25 +8,25 @@ import java.nio.file.{Files, Path}
 class Writer {
 
   /**
-   *
-   * @param pkg  java package like `js2s.dummy`
-   * @param path something like src/main/scala
+   * @param pkg
+   *   java package like `js2s.dummy`
+   * @param path
+   *   something like src/main/scala
    */
   def write(defs: List[SimplifiedDef], pkg: String, path: Path): Unit = {
     val packagePath = pkg.split("\\.")
-    val writePath = packagePath.foldLeft(path)(_.resolve(_))
+    val writePath   = packagePath.foldLeft(path)(_.resolve(_))
     scala.util.Try(Files.createDirectory(writePath))
     val filesToWrite = materializeFileContents(defs)
-    filesToWrite.foreach {
-      case (fn, defn) =>
-        val pw = new PrintWriter(s"$writePath/$fn")
-        try {
-          pw.println(s"package $pkg")
-          defn.map(_.syntax).foreach(pw.println)
-          pw.flush()
-        } finally {
-          pw.close()
-        }
+    filesToWrite.foreach { case (fn, defn) =>
+      val pw = new PrintWriter(s"$writePath/$fn")
+      try {
+        pw.println(s"package $pkg")
+        defn.map(_.syntax).foreach(pw.println)
+        pw.flush()
+      } finally {
+        pw.close()
+      }
     }
   }
 
