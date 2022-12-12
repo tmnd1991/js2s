@@ -10,7 +10,6 @@ class CirceScalaMetaUtilsTest extends munit.FunSuite {
   test("create encoder for enum") {
     val expected =
       q"""
-                        import js2s.dummy.Protocol
                         implicit val encodeProtocol: Encoder[Protocol] = new Encoder[Protocol] {
                           final def apply(a: Protocol): Json = Json.fromString(a.value)
                         }
@@ -34,8 +33,6 @@ class CirceScalaMetaUtilsTest extends munit.FunSuite {
 
   test("create encoder for const") {
     val expected = q"""
-    import js2s.dummy.zio.pippo.SpeccoVersione
-
     implicit val SpeccoVersioneEncoder: Encoder[SpeccoVersione.type] = new Encoder[SpeccoVersione.type] {
       override def apply(a: SpeccoVersione.type): Json = Json.fromString(a.value)
     }
@@ -79,8 +76,8 @@ class CirceScalaMetaUtilsTest extends munit.FunSuite {
         ).withDiscriminator("t", "notCustomer")
       )
     )
-    (CirceScalaMetaUtils.circeImports.stats ++ CirceScalaMetaUtils.circeImportsForUnions.stats ++
-      CirceScalaMetaUtils.buildCodecForUnion(actualUnion)).map(_.syntax).foreach(println)
+    CirceScalaMetaUtils.circeImports.stats ++ CirceScalaMetaUtils.circeImportsForUnions.stats ++
+      CirceScalaMetaUtils.buildCodecForUnion(actualUnion) // TODO
   }
 
 }

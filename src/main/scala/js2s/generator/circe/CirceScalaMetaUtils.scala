@@ -1,5 +1,5 @@
 package js2s.generator.circe
-import js2s.generator.{ScalaMetaUtils, UnionDef}
+import js2s.generator.UnionDef
 
 import scala.meta._
 
@@ -13,11 +13,8 @@ object CirceScalaMetaUtils {
                                  import cats.syntax.functor._"""
 
   def buildCodecForEnum(fqn: String): List[Stat] = {
-    val name                    = fqn.split("\\.", -1).last
-    val modelImporter: Importer = ScalaMetaUtils.buildImport(fqn)
-
+    val name = fqn.split("\\.", -1).last
     List(
-      Import(List(modelImporter)),
       Defn.Val(
         List(Mod.Implicit()),
         List(Pat.Var(Term.Name(s"encode$name"))),
@@ -112,11 +109,8 @@ object CirceScalaMetaUtils {
   }
 
   def buildCodecForConst(fqn: String): List[Stat] = {
-    val name                    = fqn.split("\\.", -1).last
-    val modelImporter: Importer = ScalaMetaUtils.buildImport(fqn)
-
+    val name = fqn.split("\\.", -1).last
     List(
-      Import(List(modelImporter)),
       Defn.Val(
         List(Mod.Implicit()),
         List(Pat.Var(Term.Name(s"${name}Encoder"))),
