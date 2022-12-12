@@ -8,7 +8,7 @@ import scala.jdk.CollectionConverters.{
   collectionAsScalaIterableConverter,
   mapAsScalaMapConverter
 }
-import scala.meta.{Term, Type}
+import scala.meta.Term
 
 class RootStrategy(es: EnumStrategy, ps: PrimitiveStrategy, cs: ConstantStrategy, nameChooser: NameStrategy) {
 
@@ -53,7 +53,7 @@ class RootStrategy(es: EnumStrategy, ps: PrimitiveStrategy, cs: ConstantStrategy
       case as: ArraySchema =>
         checkDiscriminator(discriminatorField, as)
         val (it, newSym) = this.resolve(fieldName, as.getAllItemSchema, symbols)
-        Some(ArrayDef(Type.Apply(Type.Name("List"), it.t :: Nil)) -> (symbols ++ newSym))
+        Some(ScalaMetaUtils.arrayDef(it.t) -> (symbols ++ newSym))
       case _ => None
     }
   def generate(

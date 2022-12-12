@@ -11,7 +11,9 @@ object WriterApp extends App {
   val w  = new Writer()
   val cw = new CirceWriter()
   val loader = SchemaLoader.builder
-    .schemaJson(new JSONObject(new JSONTokener(getClass.getClassLoader.getResourceAsStream("dataproduct.schema.json"))))
+    .schemaJson(
+      new JSONObject(new JSONTokener(getClass.getClassLoader.getResourceAsStream("schema_entity_v1.schema.json")))
+    )
     .draftV6Support
     .build()
   val parsedSchema       = loader.load().build().asInstanceOf[Schema]

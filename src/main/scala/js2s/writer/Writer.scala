@@ -40,12 +40,6 @@ class Writer {
         s"${root.name.value}.scala" -> (root :: values.map(_.value))
       case ConstDef(value, _) =>
         s"${value.name.value}.scala" -> (value :: Nil)
-//      case ArrayDef(_) =>
-//        List.empty
-//      case MapDef(_) =>
-//        List.empty
-//      case PrimitiveDef(_) =>
-//        List.empty
     }
   }.toMap
 }
