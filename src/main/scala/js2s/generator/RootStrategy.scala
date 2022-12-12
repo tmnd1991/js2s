@@ -35,9 +35,9 @@ class RootStrategy(es: EnumStrategy, ps: PrimitiveStrategy, cs: ConstantStrategy
   private def generate(
     fieldName: Option[String],
     schema: Schema,
-    symbols: Map[Type, SimplifiedDef],
+    symbols: Map[ComparableType, SimplifiedDef],
     discriminatorField: Option[String]
-  ): Option[(SimplifiedDef, Map[Type, SimplifiedDef])] =
+  ): Option[(SimplifiedDef, Map[ComparableType, SimplifiedDef])] =
     schema match {
       case o: ObjectSchema =>
         checkDiscriminator(discriminatorField, o)
@@ -59,13 +59,13 @@ class RootStrategy(es: EnumStrategy, ps: PrimitiveStrategy, cs: ConstantStrategy
   def generate(
     fieldName: Option[String],
     schema: Schema,
-    symbols: Map[Type, SimplifiedDef]
-  ): Option[(SimplifiedDef, Map[Type, SimplifiedDef])] = generate(fieldName, schema, symbols, None)
+    symbols: Map[ComparableType, SimplifiedDef]
+  ): Option[(SimplifiedDef, Map[ComparableType, SimplifiedDef])] = generate(fieldName, schema, symbols, None)
 
   private def unionCase(
     fieldName: Option[String],
     schema: Schema,
-    symbols: Map[Type, SimplifiedDef],
+    symbols: Map[ComparableType, SimplifiedDef],
     cs: CombinedSchema
   ) = {
     val discriminator = Option(cs.getUnprocessedProperties.get("discriminator"))
@@ -89,7 +89,7 @@ class RootStrategy(es: EnumStrategy, ps: PrimitiveStrategy, cs: ConstantStrategy
 
   private def productCase(
     fieldName: Option[String],
-    symbols: Map[Type, SimplifiedDef],
+    symbols: Map[ComparableType, SimplifiedDef],
     o: ObjectSchema,
     discriminatorField: Option[String]
   ) = {
@@ -114,7 +114,7 @@ class RootStrategy(es: EnumStrategy, ps: PrimitiveStrategy, cs: ConstantStrategy
     }
   }
 
-  private def mapCase(o: ObjectSchema, symbols: Map[Type, SimplifiedDef]) =
+  private def mapCase(o: ObjectSchema, symbols: Map[ComparableType, SimplifiedDef]) =
     Option(o.getSchemaOfAdditionalProperties).map { schemaOfAdditionalProps =>
       val (defn, updatedSymbols) = resolve(None, schemaOfAdditionalProps, symbols)
       ScalaMetaUtils.mapDef(defn.t) -> (symbols ++ updatedSymbols)
@@ -123,13 +123,15 @@ class RootStrategy(es: EnumStrategy, ps: PrimitiveStrategy, cs: ConstantStrategy
   private def resolve(
     fieldName: Option[String],
     schema: Schema,
-    symbols: Map[Type, SimplifiedDef]
-  ): (SimplifiedDef, Map[Type, SimplifiedDef]) =
+    symbols: Map[ComparableType, SimplifiedDef]
+  ): (SimplifiedDef, Map[ComparableType, SimplifiedDef]) =
     // this is a bit cringe
     ps.generate(schema)
       .map(_ -> symbols)
       .orElse(es.generate(fieldName, schema).map(e => e -> (symbols ++ e.symbols)))
       .orElse(cs.generate(fieldName, schema).map(c => c -> (symbols ++ c.symbols)))
-      .orElse(generate(fieldName, schema, symbols).map { case (o, s) => o -> (symbols ++ s ++ Map(o.t -> o)) })
+      .orElse(generate(fieldName, schema, symbols).map { case (o, s) =>
+        o -> (symbols ++ s ++ Map(ComparableType.of(o.t) -> o))
+      })
       .getOrElse(throw new RuntimeException(s"Unresolvable schema: $schema"))
 }

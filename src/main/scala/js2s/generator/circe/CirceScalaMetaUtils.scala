@@ -1,5 +1,5 @@
 package js2s.generator.circe
-import js2s.generator.UnionDef
+import js2s.generator.{ProductDef, UnionDef}
 
 import scala.meta._
 
@@ -9,8 +9,10 @@ object CirceScalaMetaUtils {
                          import io.circe._"""
 
   val circeImportsForUnions = q"""
-                                 import io.circe.generic.semiauto._, io.circe.syntax._
+                                 import io.circe.syntax._
                                  import cats.syntax.functor._"""
+
+  val circeSemiAutoImport = q"import io.circe.generic.semiauto._"
 
   def buildCodecForEnum(fqn: String): List[Stat] = {
     val name = fqn.split("\\.", -1).last
@@ -425,4 +427,23 @@ object CirceScalaMetaUtils {
       decoderForUnionCase(pd.t, pd.ofUnion.get._1, pd.ofUnion.get._2) ::
         encoderForUnionCase(pd.t, pd.ofUnion.get._1, pd.ofUnion.get._2) :: Nil
     } ++ (rootEncoder(unionDef) :: rootDecoder(unionDef) :: Nil)
+
+  def buildCodecForProduct(productDef: ProductDef): List[Stat] = {
+    val lrootName = productDef.t.syntax.toLowerCase
+    List(
+      Defn.Val(
+        List(Mod.Implicit()),
+        List(Pat.Var(Term.Name(s"${lrootName}Encoder"))),
+        Some(Type.Apply(Type.Name("Encoder"), List(productDef.t))),
+        Term.ApplyType(Term.Name("deriveEncoder"), List(productDef.t))
+      ),
+      Defn.Val(
+        List(Mod.Implicit()),
+        List(Pat.Var(Term.Name(s"${lrootName}Decoder"))),
+        Some(Type.Apply(Type.Name("Decoder"), List(productDef.t))),
+        Term.ApplyType(Term.Name("deriveDecoder"), List(productDef.t))
+      )
+    )
+
+  }
 }
