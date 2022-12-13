@@ -431,136 +431,123 @@ object CirceScalaMetaUtils {
   def buildCodecForProduct(productDef: ProductDef, optSchemaFile: Option[String]): List[Stat] = {
 
     val lrootName = productDef.t.syntax.toLowerCase
-    optSchemaFile.map { schemaFile =>
-      List(
-        Defn.Val(
-          List(Mod.Implicit()),
-          List(Pat.Var(Term.Name(s"${lrootName}Encoder"))),
-          Some(Type.Apply(Type.Name("Encoder"), List(productDef.t))),
-          Term.ApplyType(Term.Name("deriveEncoder"), List(productDef.t))
-        ),
-        Defn.Val(
-          List(Mod.Implicit()),
-          List(Pat.Var(Term.Name(s"${lrootName}Decoder"))),
-          Some(Type.Apply(Type.Name("Decoder"), List(productDef.t))),
-          Term.Block(
-            List(
-              Defn.Val(
-                Nil,
-                List(Pat.Var(Term.Name(s"_${lrootName}Decoder"))),
-                None,
-                Term.ApplyType(Term.Name("deriveDecoder"), List(productDef.t))
-              ),
-              Term.Apply(
-                Term.Select(Term.Name(s"_${lrootName}Decoder"), Term.Name("validate")),
-                List(
+    val encoder = Defn.Val(
+      List(Mod.Implicit()),
+      List(Pat.Var(Term.Name(s"${lrootName}Encoder"))),
+      Some(Type.Apply(Type.Name("Encoder"), List(productDef.t))),
+      Term.ApplyType(Term.Name("deriveEncoder"), List(productDef.t))
+    )
+    val decoder = optSchemaFile.map { schemaFile =>
+      Defn.Val(
+        List(Mod.Implicit()),
+        List(Pat.Var(Term.Name(s"${lrootName}Decoder"))),
+        Some(Type.Apply(Type.Name("Decoder"), List(productDef.t))),
+        Term.Apply(
+          Term.Select(
+            Term.ApplyType(Term.Name("deriveDecoder"), List(productDef.t)),
+            Term.Name("validate")
+          ),
+          List(
+            Term.Block(
+              List(
+                Term.Function(
+                  List(Term.Param(Nil, Term.Name("c"), None, None)),
                   Term.Block(
                     List(
-                      Term.Function(
-                        List(Term.Param(Nil, Term.Name("c"), None, None)),
-                        Term.Block(
-                          List(
-                            Import(
-                              List(
-                                Importer(
-                                  Term.Select(
-                                    Term.Select(Term.Name("scala"), Term.Name("jdk")),
-                                    Term.Name("CollectionConverters")
-                                  ),
-                                  List(Importee.Name(Name("asScalaBufferConverter")))
-                                )
-                              )
+                      Import(
+                        List(
+                          Importer(
+                            Term.Select(
+                              Term.Select(Term.Name("scala"), Term.Name("jdk")),
+                              Term.Name("CollectionConverters")
                             ),
-                            Import(
-                              List(
-                                Importer(
-                                  Term.Select(
-                                    Term.Select(
-                                      Term
-                                        .Select(Term.Select(Term.Name("org"), Term.Name("everit")), Term.Name("json")),
-                                      Term.Name("schema")
-                                    ),
-                                    Term.Name("loader")
-                                  ),
-                                  List(Importee.Name(Name("SchemaLoader")))
-                                )
-                              )
+                            List(Importee.Name(Name("asScalaBufferConverter")))
+                          )
+                        )
+                      ),
+                      Import(
+                        List(
+                          Importer(
+                            Term.Select(
+                              Term.Select(
+                                Term.Select(Term.Select(Term.Name("org"), Term.Name("everit")), Term.Name("json")),
+                                Term.Name("schema")
+                              ),
+                              Term.Name("loader")
                             ),
-                            Import(
-                              List(
-                                Importer(
-                                  Term.Select(Term.Name("org"), Term.Name("json")),
-                                  List(Importee.Name(Name("JSONObject")))
-                                )
-                              )
+                            List(Importee.Name(Name("SchemaLoader")))
+                          )
+                        )
+                      ),
+                      Import(
+                        List(
+                          Importer(
+                            Term.Select(Term.Name("org"), Term.Name("json")),
+                            List(Importee.Name(Name("JSONObject")))
+                          )
+                        )
+                      ),
+                      Import(
+                        List(
+                          Importer(
+                            Term.Select(Term.Name("org"), Term.Name("json")),
+                            List(Importee.Name(Name("JSONTokener")))
+                          )
+                        )
+                      ),
+                      Import(
+                        List(
+                          Importer(
+                            Term.Select(
+                              Term.Select(Term.Select(Term.Name("org"), Term.Name("everit")), Term.Name("json")),
+                              Term.Name("schema")
                             ),
-                            Import(
-                              List(
-                                Importer(
-                                  Term.Select(Term.Name("org"), Term.Name("json")),
-                                  List(Importee.Name(Name("JSONTokener")))
-                                )
-                              )
+                            List(Importee.Name(Name("ValidationException")))
+                          )
+                        )
+                      ),
+                      Import(
+                        List(
+                          Importer(
+                            Term.Select(
+                              Term.Select(Term.Select(Term.Name("org"), Term.Name("everit")), Term.Name("json")),
+                              Term.Name("schema")
                             ),
-                            Import(
-                              List(
-                                Importer(
-                                  Term.Select(
-                                    Term.Select(Term.Select(Term.Name("org"), Term.Name("everit")), Term.Name("json")),
-                                    Term.Name("schema")
-                                  ),
-                                  List(Importee.Name(Name("ValidationException")))
-                                )
-                              )
-                            ),
-                            Import(
-                              List(
-                                Importer(
-                                  Term.Select(
-                                    Term.Select(Term.Select(Term.Name("org"), Term.Name("everit")), Term.Name("json")),
-                                    Term.Name("schema")
-                                  ),
-                                  List(Importee.Name(Name("Schema")))
-                                )
-                              )
-                            ),
-                            Defn.Val(
-                              Nil,
-                              List(Pat.Var(Term.Name("loader"))),
-                              None,
+                            List(Importee.Name(Name("Schema")))
+                          )
+                        )
+                      ),
+                      Defn.Val(
+                        Nil,
+                        List(Pat.Var(Term.Name("loader"))),
+                        None,
+                        Term.Apply(
+                          Term.Select(
+                            Term.Select(
                               Term.Apply(
                                 Term.Select(
-                                  Term.Select(
-                                    Term.Apply(
-                                      Term.Select(
-                                        Term.Select(Term.Name("SchemaLoader"), Term.Name("builder")),
-                                        Term.Name("schemaJson")
-                                      ),
+                                  Term.Select(Term.Name("SchemaLoader"), Term.Name("builder")),
+                                  Term.Name("schemaJson")
+                                ),
+                                List(
+                                  Term.New(
+                                    Init(
+                                      Type.Name("JSONObject"),
+                                      Name(""),
                                       List(
-                                        Term.New(
-                                          Init(
-                                            Type.Name("JSONObject"),
-                                            Name(""),
-                                            List(
+                                        List(
+                                          Term.New(
+                                            Init(
+                                              Type.Name("JSONTokener"),
+                                              Name(""),
                                               List(
-                                                Term.New(
-                                                  Init(
-                                                    Type.Name("JSONTokener"),
-                                                    Name(""),
-                                                    List(
-                                                      List(
-                                                        Term.Apply(
-                                                          Term.Select(
-                                                            Term.Select(
-                                                              Term.Name("getClass"),
-                                                              Term.Name("getClassLoader")
-                                                            ),
-                                                            Term.Name("getResourceAsStream")
-                                                          ),
-                                                          List(Lit.String(schemaFile))
-                                                        )
-                                                      )
-                                                    )
+                                                List(
+                                                  Term.Apply(
+                                                    Term.Select(
+                                                      Term.Select(Term.Name("getClass"), Term.Name("getClassLoader")),
+                                                      Term.Name("getResourceAsStream")
+                                                    ),
+                                                    List(Lit.String(schemaFile))
                                                   )
                                                 )
                                               )
@@ -568,77 +555,77 @@ object CirceScalaMetaUtils {
                                           )
                                         )
                                       )
-                                    ),
-                                    Term.Name("draftV6Support")
-                                  ),
-                                  Term.Name("build")
-                                ),
-                                Nil
-                              )
-                            ),
-                            Defn.Val(
-                              Nil,
-                              List(Pat.Var(Term.Name("schema"))),
-                              None,
-                              Term.ApplyType(
-                                Term.Select(
-                                  Term.Apply(
-                                    Term.Select(
-                                      Term.Apply(Term.Select(Term.Name("loader"), Term.Name("load")), Nil),
-                                      Term.Name("build")
-                                    ),
-                                    Nil
-                                  ),
-                                  Term.Name("asInstanceOf")
-                                ),
-                                List(Type.Name("Schema"))
-                              )
-                            ),
-                            Term.Try(
-                              Term.Block(
-                                List(
-                                  Term.Apply(
-                                    Term.Select(Term.Name("schema"), Term.Name("validate")),
-                                    List(
-                                      Term.New(
-                                        Init(
-                                          Type.Name("JSONObject"),
-                                          Name(""),
-                                          List(
-                                            List(
-                                              Term.Ascribe(
-                                                Term.Select(
-                                                  Term.Select(Term.Name("c"), Term.Name("value")),
-                                                  Term.Name("spaces2")
-                                                ),
-                                                Type.Name("String")
-                                              )
-                                            )
-                                          )
-                                        )
-                                      )
                                     )
-                                  ),
-                                  Term.Select(Term.Name("List"), Term.Name("empty"))
-                                )
-                              ),
-                              List(
-                                Case(
-                                  Pat.Typed(Pat.Var(Term.Name("e")), Type.Name("ValidationException")),
-                                  None,
-                                  Term.Select(
-                                    Term.Select(
-                                      Term.Select(Term.Name("e"), Term.Name("getAllMessages")),
-                                      Term.Name("asScala")
-                                    ),
-                                    Term.Name("toList")
                                   )
                                 )
                               ),
-                              None
+                              Term.Name("draftV6Support")
+                            ),
+                            Term.Name("build")
+                          ),
+                          Nil
+                        )
+                      ),
+                      Defn.Val(
+                        Nil,
+                        List(Pat.Var(Term.Name("schema"))),
+                        None,
+                        Term.ApplyType(
+                          Term.Select(
+                            Term.Apply(
+                              Term.Select(
+                                Term.Apply(Term.Select(Term.Name("loader"), Term.Name("load")), Nil),
+                                Term.Name("build")
+                              ),
+                              Nil
+                            ),
+                            Term.Name("asInstanceOf")
+                          ),
+                          List(Type.Name("Schema"))
+                        )
+                      ),
+                      Term.Try(
+                        Term.Block(
+                          List(
+                            Term.Apply(
+                              Term.Select(Term.Name("schema"), Term.Name("validate")),
+                              List(
+                                Term.New(
+                                  Init(
+                                    Type.Name("JSONObject"),
+                                    Name(""),
+                                    List(
+                                      List(
+                                        Term.Ascribe(
+                                          Term.Select(
+                                            Term.Select(Term.Name("c"), Term.Name("value")),
+                                            Term.Name("spaces2")
+                                          ),
+                                          Type.Name("String")
+                                        )
+                                      )
+                                    )
+                                  )
+                                )
+                              )
+                            ),
+                            Term.Select(Term.Name("List"), Term.Name("empty"))
+                          )
+                        ),
+                        List(
+                          Case(
+                            Pat.Typed(Pat.Var(Term.Name("e")), Type.Name("ValidationException")),
+                            None,
+                            Term.Select(
+                              Term.Select(
+                                Term.Select(Term.Name("e"), Term.Name("getAllMessages")),
+                                Term.Name("asScala")
+                              ),
+                              Term.Name("toList")
                             )
                           )
-                        )
+                        ),
+                        None
                       )
                     )
                   )
@@ -648,22 +635,15 @@ object CirceScalaMetaUtils {
           )
         )
       )
+
     }.getOrElse {
-      List(
-        Defn.Val(
-          List(Mod.Implicit()),
-          List(Pat.Var(Term.Name(s"${lrootName}Encoder"))),
-          Some(Type.Apply(Type.Name("Encoder"), List(productDef.t))),
-          Term.ApplyType(Term.Name("deriveEncoder"), List(productDef.t))
-        ),
-        Defn.Val(
-          List(Mod.Implicit()),
-          List(Pat.Var(Term.Name(s"${lrootName}Decoder"))),
-          Some(Type.Apply(Type.Name("Decoder"), List(productDef.t))),
-          Term.ApplyType(Term.Name("deriveDecoder"), List(productDef.t))
-        )
+      Defn.Val(
+        List(Mod.Implicit()),
+        List(Pat.Var(Term.Name(s"${lrootName}Decoder"))),
+        Some(Type.Apply(Type.Name("Decoder"), List(productDef.t))),
+        Term.ApplyType(Term.Name("deriveDecoder"), List(productDef.t))
       )
     }
-
+    List(encoder, decoder)
   }
 }
