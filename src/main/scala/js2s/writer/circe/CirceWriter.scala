@@ -1,7 +1,7 @@
 package js2s.writer.circe
 
-import js2s.generator.circe.CirceScalaMetaUtils
 import js2s.generator._
+import js2s.generator.circe.CirceScalaMetaUtils
 import js2s.writer.circe.CirceWriter.{CodecPackage, Pkg}
 
 import java.io.PrintWriter
@@ -15,13 +15,13 @@ object CirceWriter {
 }
 class CirceWriter {
 
-  def write(defs: List[SimplifiedDef], pkg: String, path: Path): Unit = {
+  def write(root: ProductDef, defs: List[SimplifiedDef], pkg: String, path: Path, schemaFile: String): Unit = {
     val codecPackage = pkg + ".codecs"
     val packagePath  = codecPackage.split("\\.")
     val writeFolder  = packagePath.foldLeft(path)(_.resolve(_))
     val writePath    = writeFolder.resolve("CirceCodecs.scala")
     scala.util.Try(Files.createDirectory(writeFolder))
-    val lines = materializeFileContents(new CodecPackage(codecPackage), new Pkg(pkg), defs)
+    val lines = materializeFileContents(new CodecPackage(codecPackage), new Pkg(pkg), root, defs, schemaFile)
     val pw    = new PrintWriter(writePath.toFile)
     try {
       lines.map(_.syntax).foreach(pw.println)
@@ -31,7 +31,13 @@ class CirceWriter {
     }
   }
 
-  def materializeFileContents(codecPkg: CodecPackage, modelPackage: Pkg, defs: List[SimplifiedDef]): List[meta.Tree] = {
+  def materializeFileContents(
+    codecPkg: CodecPackage,
+    modelPackage: Pkg,
+    root: ProductDef,
+    defs: List[SimplifiedDef],
+    schemaFile: String
+  ): List[meta.Tree] = {
 
     val imports = buildImports(modelPackage, defs)
 
@@ -43,10 +49,12 @@ class CirceWriter {
       case ConstDef(value, _) =>
         CirceScalaMetaUtils.buildCodecForConst(modelPackage.self + "." + value.name.value)
       case pd: ProductDef =>
-        CirceScalaMetaUtils.buildCodecForProduct(pd)
+        CirceScalaMetaUtils.buildCodecForProduct(pd, None)
     }.flatten
-
-    ScalaMetaUtils.buildPackage(codecPkg.self) :: imports ::: ScalaMetaUtils.objectDef("CirceCodecs", stats) :: Nil
+    ScalaMetaUtils.buildPackage(codecPkg.self) :: imports ::: ScalaMetaUtils.objectDef(
+      "CirceCodecs",
+      CirceScalaMetaUtils.buildCodecForProduct(root, Some(schemaFile)) ::: stats
+    ) :: Nil
   }
 
   private def buildImports(modelPackage: Pkg, defs: List[SimplifiedDef]) = {

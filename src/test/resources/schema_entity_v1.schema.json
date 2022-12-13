@@ -1,0 +1,237 @@
+{
+  "$id": "https://tmnd1991.com/platform/v1/entity.schema.json",
+  "title": "Entity Descriptor",
+  "description": "",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "version of the schema of this file",
+      "default": "1"
+    },
+    "entityName": {
+      "type": "string",
+      "description": "Has to match with file name"
+    },
+    "entityVersion": {
+      "type": "string",
+      "description": "Has to match with file name"
+    },
+    "comment": {
+      "type": "string",
+      "description": "free-form text to comment the entity",
+      "default": ""
+    },
+    "coldStorage": {
+      "type": "object",
+      "properties": {
+        "format": {
+          "type": "string",
+          "description": "if an entity is both hot and cold, specify the cold format (i.e. parquet or delta)",
+          "enum": [
+            "parquet",
+            "delta"
+          ]
+        },
+        "hasHistory": {
+          "type": "boolean",
+          "description": "TBD --> this is conditional on cold area type and format <-- If the entity is mantained through the history pattern",
+          "default": "false"
+        },
+        "location": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/awsLocation"
+            }
+          ],
+          "discriminator": "provider"
+        },
+        "partitioningColumns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Ordered list of partitioning columns, columns should be already defined in the schema (columns field)"
+        }
+      },
+      "required": [
+        "format",
+        "location"
+      ]
+    },
+    "columns": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/column"
+      }
+    },
+    "dataGovernanceItems": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "data governance items to be applied at entity level"
+    }
+  },
+  "required": [
+    "entityName",
+    "entityVersion",
+    "columns",
+    "version"
+  ],
+  "$defs": {
+    "primitiveType": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "const": "primitive"
+        },
+        "value": {
+          "type": "string",
+          "enum": [
+            "tinyint",
+            "smallint",
+            "integer",
+            "bigint",
+            "float",
+            "double",
+            "decimal",
+            "string",
+            "binary",
+            "boolean",
+            "timestamp"
+          ]
+        }
+      },
+      "required": [
+        "kind",
+        "value"
+      ]
+    },
+    "structType": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "const": "struct"
+        },
+        "fields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/field"
+          }
+        }
+      },
+      "required": [
+        "kind",
+        "fields"
+      ]
+    },
+    "arrayType": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "array",
+          "type": "string"
+        },
+        "items": {
+          "$ref": "#/$defs/type"
+        }
+      },
+      "required": [
+        "kind",
+        "items"
+      ]
+    },
+    "type": {
+      "oneOf": [
+        {"$ref": "#/$defs/primitiveType"},
+        {"$ref": "#/$defs/structType"},
+        {"$ref": "#/$defs/arrayType"}
+      ],
+      "discriminator": "kind"
+    },
+    "column": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_\\-]*$"
+        },
+        "type": {
+          "$ref": "#/$defs/type"
+        },
+        "nullable": {
+          "type": "boolean",
+          "default": "true"
+        },
+        "comment": {
+          "type": "string",
+          "description": "free-form text to comment the column",
+          "default": ""
+        },
+        "dataGovernanceItems": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "data governance items to be applied at column level"
+        }
+      },
+      "required": [
+        "name",
+        "type",
+        "dataGovernanceItems"
+      ]
+    },
+    "field": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "[a-z0-9_\\-]+"
+        },
+        "type": {
+          "$ref": "#/$defs/type"
+        },
+        "nullable": {
+          "type": "boolean",
+          "default": "true"
+        },
+        "comment": {
+          "type": "string",
+          "description": "free-form text to comment the column",
+          "default": ""
+        }
+      },
+      "required": [
+        "name",
+        "type"
+      ]
+    },
+    "awsLocation": {
+      "type": "object",
+      "properties": {
+        "bucket": {
+          "type": "string"
+        },
+        "prefix": {
+          "type": "string"
+        },
+        "provider": {
+          "type": "string",
+          "const": "aws"
+        }
+      },
+      "required": [
+        "bucket",
+        "prefix",
+        "provider"
+      ]
+    }
+  }
+}

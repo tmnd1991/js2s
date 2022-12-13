@@ -13,13 +13,19 @@ import scala.jdk.CollectionConverters.collectionAsScalaIterableConverter
  */
 class NameStrategy {
 
-  def apply(fieldName: Option[String], s: Schema): Option[String] =
-    constantValue(s).orElse(defaultCase(fieldName, s))
+  def apply(fieldName: Option[String], s: Schema): Option[String] = {
+    val res = constantValue(s).orElse(defaultCase(fieldName, s))
+    res
+  }
 
   private def defaultCase(fieldName: Option[String], s: Schema) =
-    Option(s.getSchemaLocation).flatMap {
-      case "#" => None
-      case o   => Some(o)
+    Option(s.getSchemaLocation).flatMap { location =>
+      val lastSplit = location.split("/", -1).last
+      if (lastSplit == "#" || (lastSplit.nonEmpty && lastSplit.forall(_.isDigit))) {
+        None
+      } else {
+        Some(location)
+      }
     }
       .map(_.split("/", -1).last.capitalize)
       .orElse(fieldName.map(_.capitalize))

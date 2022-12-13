@@ -12,6 +12,10 @@ case class PrimitiveDef(value: Type.Name) extends SimplifiedDef {
   val t: Type                                              = value
 }
 
+case class RefDef(value: Type.Name) extends SimplifiedDef {
+  override val symbols: Map[ComparableType, SimplifiedDef] = Map.empty
+  val t: Type                                              = value
+}
 case class ProductDef(value: Defn.Class, ofUnion: Option[(String, String)]) extends SimplifiedDef {
   val symbols: Map[ComparableType, SimplifiedDef] = Map(ComparableType.of(value.name) -> this)
   val t: Type                                     = value.name

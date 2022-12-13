@@ -1,0 +1,147 @@
+{
+  "version": "v3",
+  "type": "parallelread",
+  "entityName": "name",
+  "entityVersion": "v3",
+  "description": "random entity",
+  "coldStorage": {
+    "format": "parquet",
+    "location": {
+      "bucket": "pippo",
+      "prefix": "pluto",
+      "provider": "aws"
+    },
+    "hasHistory": false,
+    "partitioningColumns": [
+      "colonna-integer",
+      "colonna-binary"
+    ]
+  },
+  "columns": [
+    {
+      "name": "colonna-tinyint",
+      "type": {
+        "kind": "primitive",
+        "value": "tinyint"
+      },
+      "comment": "commentino",
+      "dataGovernanceItems": []
+    },
+    {
+      "name": "colonna-smallint",
+      "type": {
+        "kind": "primitive",
+        "value": "smallint"
+      },
+      "comment": "commentino",
+      "dataGovernanceItems": []
+    },
+    {
+      "name": "colonna-integer",
+      "type": {
+        "kind": "primitive",
+        "value": "integer"
+      },
+      "comment": "commentino",
+      "nullable": false,
+      "dataGovernanceItems": []
+    },
+    {
+      "name": "colonna-bigint",
+      "type": {
+        "kind": "primitive",
+        "value": "bigint"
+      },
+      "dataGovernanceItems": []
+    },
+    {
+      "name": "colonna-float",
+      "type": {
+        "kind": "primitive",
+        "value": "float"
+      },
+      "dataGovernanceItems": []
+    },
+    {
+      "name": "colonna-double",
+      "type": {
+        "kind": "primitive",
+        "value": "double"
+      },
+      "dataGovernanceItems": []
+    },
+    {
+      "name": "colonna-decimal",
+      "type": {
+        "kind": "primitive",
+        "value": "decimal"
+      },
+      "dataGovernanceItems": []
+    },
+    {
+      "name": "colonna-string",
+      "type": {
+        "kind": "primitive",
+        "value": "string"
+      },
+      "dataGovernanceItems": []
+    },
+    {
+      "name": "colonna-binary",
+      "type": {
+        "kind": "primitive",
+        "value": "binary"
+      },
+      "nullable": false,
+      "dataGovernanceItems": []
+    },
+    {
+      "name": "colonna-timestamp",
+      "type": {
+        "kind": "primitive",
+        "value": "timestamp"
+      },
+      "dataGovernanceItems": []
+    },
+    {
+      "name": "colonna-struct",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "a",
+            "type": {
+              "kind": "primitive",
+              "value": "string"
+            },
+            "comment": "a is a string"
+          }
+        ]
+      },
+      "dataGovernanceItems": []
+    },
+    {
+      "name": "colonna-boolean",
+      "type": {
+        "kind": "primitive",
+        "value": "boolean"
+      },
+      "dataGovernanceItems": []
+    },
+    {
+      "name": "colonna-array",
+      "type": {
+        "kind": "array",
+        "items": {
+          "kind": "primitive",
+          "value": "string"
+        }
+      },
+      "dataGovernanceItems": [],
+      "comment": "A matrix of floats"
+    }
+  ],
+  "dataGovernanceItems": [
+    "ESP"
+  ]
+}
