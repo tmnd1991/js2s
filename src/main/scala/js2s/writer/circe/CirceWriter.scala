@@ -51,9 +51,9 @@ class CirceWriter {
       case pd: ProductDef =>
         CirceScalaMetaUtils.buildCodecForProduct(pd, None)
     }.flatten
-    ScalaMetaUtils.buildPackage(codecPkg.self) :: imports ::: ScalaMetaUtils.objectDef(
+    ScalaMetaUtils.buildPackage(codecPkg.self) :: ScalaMetaUtils.objectDef(
       "CirceCodecs",
-      CirceScalaMetaUtils.buildCodecForProduct(root, Some(schemaFile)) ::: stats
+      imports ::: CirceScalaMetaUtils.buildCodecForProduct(root, Some(schemaFile)) ::: stats
     ) :: Nil
   }
 

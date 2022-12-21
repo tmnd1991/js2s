@@ -1,7 +1,19 @@
-package js2s.generator
+package js2s.generator.circe
 
+import js2s.generator.{
+  ComparableType,
+  ConstantStrategy,
+  EnumStrategy,
+  NameStrategy,
+  PrimitiveStrategy,
+  ProductDef,
+  RootStrategy,
+  SimplifiedDef
+}
 import js2s.tests.{TryAssertions, tags}
 import js2s.writer.Writer
+import js2s.writer.circe.CirceWriter
+import js2s.writer.circe.CirceWriter.{CodecPackage, Pkg}
 import org.everit.json.schema.Schema
 import org.everit.json.schema.loader.SchemaLoader
 import org.json.{JSONObject, JSONTokener}
@@ -9,24 +21,20 @@ import org.json.{JSONObject, JSONTokener}
 import scala.reflect.runtime.currentMirror
 import scala.tools.reflect.ToolBox
 
-class RootStrategyIntegrationTest extends munit.FunSuite with TryAssertions {
-
+class CirceIntegrationTest extends munit.FunSuite with TryAssertions {
   test("data product test case".tag(tags.slow)) {
     assertIsSuccess(tryGenAndCompile("dataproduct.schema.json"))
   }
-  test("union test case".tag(tags.slow)) {
-    assertIsSuccess(tryGenAndCompile("union.schema.json"))
-  }
 
-  test("entity schema".tag(tags.slow)) {
+  test("schema_entity_v1 test case".tag(tags.slow)) {
     assertIsSuccess(tryGenAndCompile("schema_entity_v1.schema.json"))
   }
 
-  private def tryGenAndCompile(schemaLocation: String) =
+  private def tryGenAndCompile(schemaFile: String) =
     scala.util.Try {
       val loader = SchemaLoader.builder
         .schemaJson(
-          new JSONObject(new JSONTokener(getClass.getClassLoader.getResourceAsStream(schemaLocation)))
+          new JSONObject(new JSONTokener(getClass.getClassLoader.getResourceAsStream(schemaFile)))
         )
         .draftV6Support
         .build()
@@ -39,7 +47,18 @@ class RootStrategyIntegrationTest extends munit.FunSuite with TryAssertions {
       val res                                               = os.generate(None, parsedSchema, Set.empty, Map.empty)
       val (nd, _, allD: Map[ComparableType, SimplifiedDef]) = res.get
       val code                                              = new Writer().materializeFileContents(nd :: allD.values.toList).values.flatten.mkString("\n")
-      val toolbox                                           = currentMirror.mkToolBox()
-      toolbox.compile(toolbox.parse(code))()
+      val circeCode = new CirceWriter()
+        .materializeFileContents(
+          new CodecPackage("test"),
+          new Pkg("test"),
+          nd.asInstanceOf[ProductDef],
+          allD.values.toList,
+          schemaFile
+        )
+        .map(_.syntax)
+        .drop(1)
+        .mkString("\n")
+      val toolbox = currentMirror.mkToolBox()
+      toolbox.compile(toolbox.parse(code + "\n" + circeCode))()
     }
 }
